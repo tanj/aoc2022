@@ -49,3 +49,4 @@ flycheck_*.el
 
 # Zig ignores
 /zig-cache/
+/zig-out/
