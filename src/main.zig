@@ -32,6 +32,31 @@ const ElfStats = struct {
             self.total,
         });
     }
+
+    fn process_summary(
+        self: *ElfStats,
+        elf_summary: *ElfStats,
+        elf_record: *ElfStats,
+        elf_count: u8,
+    ) void {
+        self.id = elf_count;
+        if (self.min < elf_summary.min or elf_summary.min == 0) {
+            elf_summary.min = self.min;
+            elf_record.min = elf_count;
+        }
+        if (self.max > elf_summary.max) {
+            elf_summary.max = self.max;
+            elf_record.max = elf_count;
+        }
+        if (self.count > elf_summary.count) {
+            elf_summary.count = self.count;
+            elf_record.count = elf_count;
+        }
+        if (self.total > elf_summary.total) {
+            elf_summary.total = self.total;
+            elf_record.total = elf_count;
+        }
+    }
 };
 
 fn cmpTotal(context: void, a: ElfStats, b: ElfStats) bool {
@@ -74,23 +99,7 @@ pub fn main() !void {
             current_elf.add_calories(calories);
         } else {
             elf_count += 1;
-            current_elf.id = elf_count;
-            if (current_elf.min < elf_summary.min or elf_summary.min == 0) {
-                elf_summary.min = current_elf.min;
-                elf_record.min = elf_count;
-            }
-            if (current_elf.max > elf_summary.max) {
-                elf_summary.max = current_elf.max;
-                elf_record.max = elf_count;
-            }
-            if (current_elf.count > elf_summary.count) {
-                elf_summary.count = current_elf.count;
-                elf_record.count = elf_count;
-            }
-            if (current_elf.total > elf_summary.total) {
-                elf_summary.total = current_elf.total;
-                elf_record.total = elf_count;
-            }
+            current_elf.process_summary(&elf_summary, &elf_record, elf_count);
             // add current elf to list of elves
             try elfs.append(current_elf);
             try stdout.print("Elf: {d}\n", .{elf_count});
@@ -101,23 +110,7 @@ pub fn main() !void {
 
     if (current_elf.total > 0) {
         elf_count += 1;
-        current_elf.id = elf_count;
-        if (current_elf.min < elf_summary.min or elf_summary.min == 0) {
-            elf_summary.min = current_elf.min;
-            elf_record.min = elf_count;
-        }
-        if (current_elf.max > elf_summary.max) {
-            elf_summary.max = current_elf.max;
-            elf_record.max = elf_count;
-        }
-        if (current_elf.count > elf_summary.count) {
-            elf_summary.count = current_elf.count;
-            elf_record.count = elf_count;
-        }
-        if (current_elf.total > elf_summary.total) {
-            elf_summary.total = current_elf.total;
-            elf_record.total = elf_count;
-        }
+        current_elf.process_summary(&elf_summary, &elf_record, elf_count);
         // add current elf to list of elves
         try elfs.append(current_elf);
         try stdout.print("Elf: {d}\n", .{elf_count});
