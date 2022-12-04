@@ -11,12 +11,17 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const exe = b.addExecutable("aoc-day1", "src/day1/main.zig");
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.install();
+    const day1_exe = b.addExecutable("aoc-day1", "src/day1/main.zig");
+    day1_exe.setTarget(target);
+    day1_exe.setBuildMode(mode);
+    day1_exe.install();
 
-    const run_cmd = exe.run();
+    const day2_exe = b.addExecutable("aoc-day2", "src/day2/main.zig");
+    day2_exe.setTarget(target);
+    day2_exe.setBuildMode(mode);
+    day2_exe.install();
+
+    const run_cmd = day1_exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);
@@ -25,7 +30,7 @@ pub fn build(b: *std.build.Builder) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    const exe_tests = b.addTest("src/day1/main.zig");
+    const exe_tests = b.addTest("src/day2/main.zig");
     exe_tests.setTarget(target);
     exe_tests.setBuildMode(mode);
 
