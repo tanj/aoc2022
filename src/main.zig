@@ -2,6 +2,7 @@ const std = @import("std");
 const parseInt = std.fmt.parseInt;
 
 const ElfStats = struct {
+    id: u8 = 0,
     min: u32 = 0,
     max: u32 = 0,
     total: u32 = 0,
@@ -32,6 +33,14 @@ const ElfStats = struct {
         });
     }
 };
+
+fn cmpTotal(context: void, a: ElfStats, b: ElfStats) bool {
+    _ = context;
+    if (a.total > b.total) {
+        return true;
+    }
+    return false;
+}
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -65,6 +74,7 @@ pub fn main() !void {
             current_elf.add_calories(calories);
         } else {
             elf_count += 1;
+            current_elf.id = elf_count;
             if (current_elf.min < elf_summary.min or elf_summary.min == 0) {
                 elf_summary.min = current_elf.min;
                 elf_record.min = elf_count;
@@ -91,6 +101,7 @@ pub fn main() !void {
 
     if (current_elf.total > 0) {
         elf_count += 1;
+        current_elf.id = elf_count;
         if (current_elf.min < elf_summary.min or elf_summary.min == 0) {
             elf_summary.min = current_elf.min;
             elf_record.min = elf_count;
@@ -116,6 +127,22 @@ pub fn main() !void {
     try elf_record.display(stdout);
     try stdout.print("Calorie Summary: ", .{});
     try elf_summary.display(stdout);
+
+    var elf_slice = elfs.toOwnedSlice();
+    std.sort.sort(ElfStats, elf_slice, {}, cmpTotal);
+    {
+        var i: u8 = 0;
+        var top_three_total: u32 = 0;
+        while (i < 3) : (i += 1) {
+            try stdout.print("Elf id: {d} {d}: with {d}\n", .{
+                elf_slice[i].id,
+                i + 1,
+                elf_slice[i].total,
+            });
+            top_three_total += elf_slice[i].total;
+        }
+        try stdout.print("Top three total: {d}\n", .{top_three_total});
+    }
 
     try bw.flush(); // don't forget to flush!
 }
