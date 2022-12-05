@@ -7,10 +7,26 @@ const Choice = enum(u8) {
 
     pub fn fromByte(char: u8) Choice {
         return switch (char) {
-            'A', 'X' => Choice.rock,
-            'B', 'Y' => Choice.paper,
-            'C', 'Z' => Choice.scissors,
+            'A' => Choice.rock,
+            'B' => Choice.paper,
+            'C' => Choice.scissors,
             else => unreachable,
+        };
+    }
+
+    pub fn fromStrat(strat: GameResult, them: Choice) Choice {
+        return switch (strat) {
+            .loss => switch (them) {
+                .rock => Choice.scissors,
+                .paper => Choice.rock,
+                .scissors => Choice.paper,
+            },
+            .draw => them,
+            .win => switch (them) {
+                .rock => Choice.paper,
+                .paper => Choice.scissors,
+                .scissors => Choice.rock,
+            },
         };
     }
 };
@@ -32,6 +48,15 @@ const GameResult = enum(u8) {
             return GameResult.win;
         return GameResult.loss;
     }
+
+    pub fn fromByte(char: u8) GameResult {
+        return switch (char) {
+            'X' => GameResult.loss,
+            'Y' => GameResult.draw,
+            'Z' => GameResult.win,
+            else => unreachable,
+        };
+    }
 };
 
 const Tournament = struct {
@@ -46,7 +71,7 @@ const Tournament = struct {
 
         if (strat.len == 3) {
             const them = Choice.fromByte(strat[0]);
-            const us = Choice.fromByte(strat[2]);
+            const us = Choice.fromStrat(GameResult.fromByte(strat[2]), them);
             const gr = GameResult.aFight(us, them);
 
             self.score += @enumToInt(gr) + @enumToInt(us);
