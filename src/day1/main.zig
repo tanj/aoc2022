@@ -121,7 +121,7 @@ pub fn main() !void {
     try stdout.print("Calorie Summary: ", .{});
     try elf_summary.display(stdout);
 
-    var elf_slice = elfs.toOwnedSlice();
+    var elf_slice = try elfs.toOwnedSlice();
     std.sort.sort(ElfStats, elf_slice, {}, cmpTotal);
     {
         var i: u8 = 0;
