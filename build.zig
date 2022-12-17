@@ -26,6 +26,11 @@ pub fn build(b: *std.build.Builder) void {
     day3_exe.setBuildMode(mode);
     day3_exe.install();
 
+    const day4_exe = b.addExecutable("aoc-day4", "src/day4/main.zig");
+    day4_exe.setTarget(target);
+    day4_exe.setBuildMode(mode);
+    day4_exe.install();
+
     const run_cmd = day1_exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
