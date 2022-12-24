@@ -64,11 +64,25 @@ pub fn main() !void {
 
     while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
         // continue parsing moves
-        _ = line;
+        var it = std.mem.tokenize(u8, line, "move from to");
+        var move: i16 = try std.fmt.parseInt(i16, it.next().?, 10);
+        var from: usize = try std.fmt.parseInt(usize, it.next().?, 10);
+        var to: usize = try std.fmt.parseInt(usize, it.next().?, 10);
+        while (move > 0) : (move -= 1) {
+            try stacks[to].append(stacks[from].pop());
+        }
     }
 
     try display_stacks(stacks[1..]);
-    try stdout.print("Top of stacks: \n", .{});
+    try stdout.print("Top of stacks: ", .{});
+
+    {
+        var ix: u8 = 1;
+        while (ix < num_stacks) : (ix += 1) {
+            try stdout.print("{c}", .{stacks[ix].pop()});
+        }
+        try stdout.print("\n", .{});
+    }
     try bw.flush(); // don't forget to flush!
 }
 
