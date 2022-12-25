@@ -68,8 +68,13 @@ pub fn main() !void {
         var move: i16 = try std.fmt.parseInt(i16, it.next().?, 10);
         var from: usize = try std.fmt.parseInt(usize, it.next().?, 10);
         var to: usize = try std.fmt.parseInt(usize, it.next().?, 10);
+
         while (move > 0) : (move -= 1) {
-            try stacks[to].append(stacks[from].pop());
+            try stacks[0].append(stacks[from].pop());
+        }
+        // this simulates moving slices, but super simple
+        while (stacks[0].popOrNull()) |item| {
+            try stacks[to].append(item);
         }
     }
 
