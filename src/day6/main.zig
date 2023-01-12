@@ -19,22 +19,23 @@ pub fn main() !void {
     var in_stream = buf_reader.reader();
     //var buf: [1024]u8 = undefined;
 
-    var som = [4]u8{ 0, 0, 0, 0 };
+    const num_distinct = 14;
+    var som = [_]u8{0} ** num_distinct;
     var fifo = std.fifo.LinearFifo(u8, std.fifo.LinearFifoBufferType.Slice).init(som[0..]);
     //fifo.init(som[0..]);
     defer fifo.deinit();
 
     var i: usize = 1;
     stream: while (in_stream.readByte()) |char| : (i += 1) {
-        if (fifo.readableLength() == 4) {
+        if (fifo.readableLength() == num_distinct) {
             _ = fifo.readItem().?;
         }
         try fifo.writeItem(char);
-        if (i > 4) {
+        if (i > num_distinct) {
             var x: u8 = 0;
-            while (x < 4) : (x += 1) {
+            while (x < num_distinct) : (x += 1) {
                 var y: u8 = 0;
-                while (y < 4) : (y += 1) {
+                while (y < num_distinct) : (y += 1) {
                     if (y != x) {
                         if (som[x] == som[y]) {
                             continue :stream;
