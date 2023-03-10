@@ -11,6 +11,14 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
+    const pkgs = struct {
+        const mecha = std.build.Pkg{
+            .name = "mecha",
+            .source = .{ .path = "../mecha/mecha.zig" },
+            .dependencies = &[_]std.build.Pkg{},
+        };
+    };
+
     const day1_exe = b.addExecutable("aoc-day1", "src/day1/main.zig");
     day1_exe.setTarget(target);
     day1_exe.setBuildMode(mode);
@@ -40,6 +48,12 @@ pub fn build(b: *std.build.Builder) void {
     day6_exe.setTarget(target);
     day6_exe.setBuildMode(mode);
     day6_exe.install();
+
+    const day7_exe = b.addExecutable("aoc-day7", "src/day7/main.zig");
+    day7_exe.addPackage(pkgs.mecha);
+    day7_exe.setTarget(target);
+    day7_exe.setBuildMode(mode);
+    day7_exe.install();
 
     const run_cmd = day1_exe.run();
     run_cmd.step.dependOn(b.getInstallStep());
