@@ -7,52 +7,72 @@ pub fn build(b: *std.build.Builder) void {
     // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
 
-    // Standard release options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
+    // Standard optimization options allow the person running `zig build` to select
+    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
+    // set a preferred release mode, allowing the user to decide how to optimize.
+    const optimize = b.standardOptimizeOption(.{});
 
-    const pkgs = struct {
-        const mecha = std.build.Pkg{
-            .name = "mecha",
-            .source = .{ .path = "../mecha/mecha.zig" },
-            .dependencies = &[_]std.build.Pkg{},
-        };
-    };
+    const mecha = b.createModule(.{
+        //.name = "mecha",
+        .source_file = .{ .path = "../mecha/mecha.zig" },
+        .dependencies = &.{},
+    });
 
-    const day1_exe = b.addExecutable("aoc-day1", "src/day1/main.zig");
-    day1_exe.setTarget(target);
-    day1_exe.setBuildMode(mode);
+    const day1_exe = b.addExecutable(.{
+        .name = "aoc-day1",
+        .root_source_file = .{ .path = "src/day1/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     day1_exe.install();
 
-    const day2_exe = b.addExecutable("aoc-day2", "src/day2/main.zig");
-    day2_exe.setTarget(target);
-    day2_exe.setBuildMode(mode);
+    const day2_exe = b.addExecutable(.{
+        .name = "aoc-day2",
+        .root_source_file = .{ .path = "src/day2/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     day2_exe.install();
 
-    const day3_exe = b.addExecutable("aoc-day3", "src/day3/main.zig");
-    day3_exe.setTarget(target);
-    day3_exe.setBuildMode(mode);
+    const day3_exe = b.addExecutable(.{
+        .name = "aoc-day3",
+        .root_source_file = .{ .path = "src/day3/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     day3_exe.install();
 
-    const day4_exe = b.addExecutable("aoc-day4", "src/day4/main.zig");
-    day4_exe.setTarget(target);
-    day4_exe.setBuildMode(mode);
+    const day4_exe = b.addExecutable(.{
+        .name = "aoc-day4",
+        .root_source_file = .{ .path = "src/day4/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     day4_exe.install();
 
-    const day5_exe = b.addExecutable("aoc-day5", "src/day5/main.zig");
-    day5_exe.setTarget(target);
-    day5_exe.setBuildMode(mode);
+    const day5_exe = b.addExecutable(.{
+        .name = "aoc-day5",
+        .root_source_file = .{ .path = "src/day5/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     day5_exe.install();
 
-    const day6_exe = b.addExecutable("aoc-day6", "src/day6/main.zig");
-    day6_exe.setTarget(target);
-    day6_exe.setBuildMode(mode);
+    const day6_exe = b.addExecutable(.{
+        .name = "aoc-day6",
+        .root_source_file = .{ .path = "src/day6/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
     day6_exe.install();
 
-    const day7_exe = b.addExecutable("aoc-day7", "src/day7/main.zig");
-    day7_exe.addPackage(pkgs.mecha);
-    day7_exe.setTarget(target);
-    day7_exe.setBuildMode(mode);
+    const day7_exe = b.addExecutable(.{
+        .name = "aoc-day7",
+        .root_source_file = .{ .path = "src/day7/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    day7_exe.addModule("mecha", mecha);
     day7_exe.install();
 
     const run_cmd = day1_exe.run();
@@ -64,9 +84,11 @@ pub fn build(b: *std.build.Builder) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    const exe_tests = b.addTest("src/day2/main.zig");
-    exe_tests.setTarget(target);
-    exe_tests.setBuildMode(mode);
+    const exe_tests = b.addTest(.{
+        .root_source_file = .{ .path = "src/day2/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&exe_tests.step);
