@@ -24,7 +24,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = target,
         .optimize = optimize,
     });
-    day1_exe.install();
+    b.installArtifact(day1_exe);
 
     const day2_exe = b.addExecutable(.{
         .name = "aoc-day2",
@@ -32,7 +32,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = target,
         .optimize = optimize,
     });
-    day2_exe.install();
+    b.installArtifact(day2_exe);
 
     const day3_exe = b.addExecutable(.{
         .name = "aoc-day3",
@@ -40,7 +40,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = target,
         .optimize = optimize,
     });
-    day3_exe.install();
+    b.installArtifact(day3_exe);
 
     const day4_exe = b.addExecutable(.{
         .name = "aoc-day4",
@@ -48,7 +48,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = target,
         .optimize = optimize,
     });
-    day4_exe.install();
+    b.installArtifact(day4_exe);
 
     const day5_exe = b.addExecutable(.{
         .name = "aoc-day5",
@@ -56,7 +56,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = target,
         .optimize = optimize,
     });
-    day5_exe.install();
+    b.installArtifact(day5_exe);
 
     const day6_exe = b.addExecutable(.{
         .name = "aoc-day6",
@@ -64,7 +64,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = target,
         .optimize = optimize,
     });
-    day6_exe.install();
+    b.installArtifact(day6_exe);
 
     const day7_exe = b.addExecutable(.{
         .name = "aoc-day7",
@@ -73,9 +73,11 @@ pub fn build(b: *std.build.Builder) void {
         .optimize = optimize,
     });
     day7_exe.addModule("mecha", mecha);
-    day7_exe.install();
+    b.installArtifact(day7_exe);
 
-    const run_cmd = day1_exe.run();
+    const run_cmd = std.build.RunStep.create(b, "run day7");
+    run_cmd.addArtifactArg(day7_exe);
+
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);
