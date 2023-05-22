@@ -138,11 +138,11 @@ pub fn main() !void {
                         if (mem.eql(u8, parsed.statement.arg, "/")) {
                             active_node = &root;
                         } else if (mem.eql(u8, parsed.statement.arg, "..")) {
-                            active_node = active_node.*.parent.?;
+                            active_node = active_node.parent.?;
                         } else {
                             // Find the directory in the active dir list and change to it
-                            if (active_node.*.lt == ListingTypeTag.dir) {
-                                for (active_node.*.lt.dir.items) |item| {
+                            if (active_node.lt == ListingTypeTag.dir) {
+                                for (active_node.lt.dir.items) |item| {
                                     if (mem.eql(u8, item.name, parsed.statement.arg)) {
                                         active_node = item.node();
                                         break;
@@ -155,8 +155,8 @@ pub fn main() !void {
                 }
             },
             StatementListingTypeTag.listing => {
-                if (active_node.*.lt == ListingTypeTag.dir) {
-                    try active_node.*.lt.dir.append(parsed);
+                if (active_node.lt == ListingTypeTag.dir) {
+                    try active_node.lt.dir.append(parsed);
                     parsed.listing.parent = active_node;
                 }
             },
