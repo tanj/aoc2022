@@ -25,19 +25,21 @@ const ListingTypeTag = enum {
 };
 
 const ListingType = union(ListingTypeTag) {
-    dir: bool,
+    dir: std.ArrayList(Listing),
     size: usize,
 };
 
 const Listing = struct {
     lt: ListingType,
     name: []const u8,
+    parent: ?*Listing,
 
     fn fromDir(allocator: mem.Allocator, str: []const u8) mecha.Error!Listing {
         const res = try dir_line.parse(allocator, str);
         return .{
-            .lt = .{ .dir = true },
+            .lt = .{ .dir = std.ArrayList(Listing).init(allocator) },
             .name = res.value,
+            .parent = null,
         };
     }
 
@@ -46,7 +48,12 @@ const Listing = struct {
         return .{
             .lt = .{ .size = res.value.@"0" },
             .name = res.value.@"1",
+            .parent = null,
         };
+    }
+
+    fn node(self: *const Listing) *const Listing {
+        return self;
     }
 };
 
@@ -100,6 +107,13 @@ pub fn main() !void {
     var buf_reader = std.io.bufferedReader(in_reader);
     var in_stream = buf_reader.reader();
     var buf: [1024]u8 = undefined;
+    var root: Listing = .{
+        .lt = .{ .dir = std.ArrayList(Listing).init(arena.allocator()) },
+        .name = "/",
+        .parent = null,
+    };
+    root.parent = &root;
+    var active_node: *Listing = &root;
 
     while (try in_stream.readUntilDelimiterOrEof(&buf, '\n')) |line| {
         // var parsed = (try parse_line.parse(arena.allocator(), line)).value;
@@ -116,6 +130,37 @@ pub fn main() !void {
         }
         try stdout.print("{}\n", .{parsed});
         try bw.flush();
+
+        switch (parsed) {
+            StatementListingTypeTag.statement => {
+                switch (parsed.statement.cmd) {
+                    Command.cd => {
+                        if (mem.eql(u8, parsed.statement.arg, "/")) {
+                            active_node = &root;
+                        } else if (mem.eql(u8, parsed.statement.arg, "..")) {
+                            active_node = active_node.*.parent.?;
+                        } else {
+                            // Find the directory in the active dir list and change to it
+                            if (active_node.*.lt == ListingTypeTag.dir) {
+                                for (active_node.*.lt.dir.items) |item| {
+                                    if (mem.eql(u8, item.name, parsed.statement.arg)) {
+                                        active_node = item.node();
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    Command.ls => {},
+                }
+            },
+            StatementListingTypeTag.listing => {
+                if (active_node.*.lt == ListingTypeTag.dir) {
+                    try active_node.*.lt.dir.append(parsed);
+                    parsed.listing.parent = active_node;
+                }
+            },
+        }
     }
 
     try stdout.print("Start of packet: {}\n", .{1});
