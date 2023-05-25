@@ -25,7 +25,7 @@ const ListingTypeTag = enum {
 };
 
 const ListingType = union(ListingTypeTag) {
-    dir: std.ArrayList(Listing),
+    dir: std.StringHashMap(Listing),
     size: usize,
 };
 
@@ -33,12 +33,13 @@ const Listing = struct {
     lt: ListingType,
     name: []const u8,
     parent: ?*Listing,
+    total_size: usize = 0,
 
     fn fromDir(allocator: mem.Allocator, str: []const u8) mecha.Error!Listing {
         const res = try dir_line.parse(allocator, str);
         return .{
-            .lt = .{ .dir = std.ArrayList(Listing).init(allocator) },
-            .name = res.value,
+            .lt = .{ .dir = std.StringHashMap(Listing).init(allocator) },
+            .name = try allocator.dupe(u8, res.value),
             .parent = null,
         };
     }
@@ -47,12 +48,12 @@ const Listing = struct {
         const res = try file_line.parse(allocator, str);
         return .{
             .lt = .{ .size = res.value.@"0" },
-            .name = res.value.@"1",
+            .name = try allocator.dupe(u8, res.value.@"1"),
             .parent = null,
         };
     }
 
-    fn node(self: *const Listing) *const Listing {
+    fn node(self: *Listing) *Listing {
         return self;
     }
 };
@@ -108,7 +109,7 @@ pub fn main() !void {
     var in_stream = buf_reader.reader();
     var buf: [1024]u8 = undefined;
     var root: Listing = .{
-        .lt = .{ .dir = std.ArrayList(Listing).init(arena.allocator()) },
+        .lt = .{ .dir = std.StringHashMap(Listing).init(arena.allocator()) },
         .name = "/",
         .parent = null,
     };
@@ -128,8 +129,8 @@ pub fn main() !void {
                 try stdout.print("ERROR Failed to parse: {s}\n", .{line});
             }
         }
-        try stdout.print("{}\n", .{parsed});
-        try bw.flush();
+        // try stdout.print("{}\n", .{parsed});
+        // try bw.flush();
 
         switch (parsed) {
             StatementListingTypeTag.statement => {
@@ -142,11 +143,10 @@ pub fn main() !void {
                         } else {
                             // Find the directory in the active dir list and change to it
                             if (active_node.lt == ListingTypeTag.dir) {
-                                for (active_node.lt.dir.items) |item| {
-                                    if (mem.eql(u8, item.name, parsed.statement.arg)) {
-                                        active_node = item.node();
-                                        break;
-                                    }
+                                var node = active_node.lt.dir.getPtr(parsed.statement.arg);
+                                if (node) |n| {
+                                    // active_node = @constCast(&n);
+                                    active_node = n;
                                 }
                             }
                         }
@@ -156,13 +156,44 @@ pub fn main() !void {
             },
             StatementListingTypeTag.listing => {
                 if (active_node.lt == ListingTypeTag.dir) {
-                    try active_node.lt.dir.append(parsed);
                     parsed.listing.parent = active_node;
+                    try active_node.lt.dir.put(parsed.listing.name, parsed.listing);
                 }
             },
         }
     }
 
-    try stdout.print("Start of packet: {}\n", .{1});
+    var iter = root.lt.dir.keyIterator();
+    while (iter.next()) |key| {
+        var nobj = root.lt.dir.getPtr(key.*);
+        if (nobj) |n| {
+            root.total_size += try dir_dive(n, stdout);
+        }
+    }
+    try stdout.print("Mystery Size {}\n", .{mystery_size});
+    try stdout.print("Root total size: {}\n", .{root.total_size});
     try bw.flush(); // don't forget to flush!
+}
+
+var mystery_size: usize = 0;
+fn dir_dive(obj: *Listing, out: anytype) !usize {
+    switch (obj.lt) {
+        ListingTypeTag.dir => {
+            var ter = obj.lt.dir.keyIterator();
+            while (ter.next()) |key| {
+                var nobj = obj.lt.dir.getPtr(key.*);
+                if (nobj) |n| {
+                    obj.total_size += try dir_dive(n, out);
+                }
+            }
+            if (obj.total_size <= 100000) {
+                try out.print("obj {s}, size {}\n", .{ obj.name, obj.total_size });
+                mystery_size += obj.total_size;
+            }
+        },
+        ListingTypeTag.size => {
+            obj.total_size = obj.lt.size;
+        },
+    }
+    return obj.total_size;
 }
