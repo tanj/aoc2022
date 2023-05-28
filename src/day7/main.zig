@@ -172,6 +172,11 @@ pub fn main() !void {
     }
     try stdout.print("Mystery Size {}\n", .{mystery_size});
     try stdout.print("Root total size: {}\n", .{root.total_size});
+
+    const space_needed = 30000000 - (70000000 - root.total_size);
+    try stdout.print("Need to find {} bytes of space\n", .{space_needed});
+    kill_selection = &root;
+    try dir_to_kill(&root, space_needed, stdout);
     try bw.flush(); // don't forget to flush!
 }
 
@@ -196,4 +201,27 @@ fn dir_dive(obj: *Listing, out: anytype) !usize {
         },
     }
     return obj.total_size;
+}
+
+var kill_selection: *Listing = undefined;
+fn dir_to_kill(obj: *Listing, space_needed: usize, out: anytype) !void {
+    switch (obj.lt) {
+        ListingTypeTag.dir => {
+            if (obj.total_size > space_needed) {
+                if (obj.total_size < kill_selection.total_size) {
+                    kill_selection = obj;
+                    try out.print("selecting: {s}, size: {}\n", .{ kill_selection.name, kill_selection.total_size });
+                }
+                var ter = obj.lt.dir.keyIterator();
+                while (ter.next()) |key| {
+                    var nobj = obj.lt.dir.getPtr(key.*);
+                    if (nobj) |n| {
+                        // recurse and somehow return something useful
+                        try dir_to_kill(n, space_needed, out);
+                    }
+                }
+            }
+        },
+        ListingTypeTag.size => {},
+    }
 }
